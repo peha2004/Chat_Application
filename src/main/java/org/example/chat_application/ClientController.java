@@ -25,7 +25,7 @@ public class ClientController {
     public void initialize() {
         new Thread(() -> {
             try {
-                socket = new Socket("192.168.43.150", 3000);
+                socket = new Socket("localhost", 3000);
                 appendText("Connected to server!");
 
                 input = new DataInputStream(socket.getInputStream());
@@ -54,15 +54,22 @@ public class ClientController {
 
     public void onSend(ActionEvent actionEvent) {
         try {
+            if (output == null) {
+                appendText("Not connected yet");
+                return;
+            }
+
             String msg = txtMessage.getText();
             output.writeUTF(msg);
             output.flush();
+
             appendText("Me: " + msg);
             txtMessage.clear();
         } catch (IOException e) {
             appendText("Error sending message!");
         }
     }
+
 
 
     private void appendText(String text) {
@@ -73,20 +80,20 @@ public class ClientController {
 
     public void sendImageOnAction(ActionEvent actionEvent) {
         FileChooser fileChooser = new FileChooser();
-        File file=fileChooser.showOpenDialog(new Stage());
-        if (file!=null){
+        File file = fileChooser.showOpenDialog(new Stage());
+
+        if (file != null) {
             try {
-                byte[] imageBytes=
-                        Files.readAllBytes(file.toPath());
-                output=new DataOutputStream(socket.getOutputStream());
+                byte[] imageBytes = Files.readAllBytes(file.toPath());
+
                 output.writeUTF("IMAGE");
                 output.writeInt(imageBytes.length);
                 output.write(imageBytes);
                 output.flush();
-                txtArea.appendText(file.getName()+"\n");
-                txtArea.appendText(file.getAbsolutePath()+"\n");
+
+                appendText("Sent image: " + file.getName());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                appendText("Error sending image");
             }
         }
     }
